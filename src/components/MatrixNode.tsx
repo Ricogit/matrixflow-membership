@@ -1,6 +1,5 @@
 import React from 'react';
 import { Member } from '@/types/member';
-import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -46,52 +45,51 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({
   };
 
   return (
-    <Card
+    <div
       className={cn(
-        "relative transition-all duration-300 cursor-pointer hover:shadow-medium",
-        member ? "bg-gradient-card" : "bg-muted/30 border-dashed",
-        isAvailable && "border-accent hover:border-accent-foreground hover:shadow-glow",
+        "relative transition-all duration-300 cursor-pointer hover:shadow-glow rounded-full aspect-square flex items-center justify-center",
+        member ? "bg-gradient-card border-2 border-primary/30" : "bg-muted/30 border-2 border-dashed border-muted-foreground/30",
+        isAvailable && "border-accent hover:border-accent-foreground hover:shadow-glow animate-pulse",
         className
       )}
       onClick={onClick}
     >
-      <div className="p-4 text-center">
+      <div className="p-4 text-center flex flex-col items-center justify-center h-full">
         {member ? (
-          <div className="space-y-3">
-            <Avatar className="mx-auto h-12 w-12 border-2 border-primary/20">
-              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+          <div className="space-y-2 flex flex-col items-center">
+            <Avatar className="h-10 w-10 border-2 border-primary/30">
+              <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-xs">
                 {getInitials(member.name)}
               </AvatarFallback>
             </Avatar>
             
-            <div className="space-y-1">
-              <h3 className="font-semibold text-sm truncate">{member.name}</h3>
-              <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+            <div className="space-y-1 text-center">
+              <h3 className="font-semibold text-xs truncate max-w-20">{member.name}</h3>
               
               <Badge 
                 variant="outline" 
-                className={cn("text-xs", getStatusColor(member.status))}
+                className={cn("text-xs px-1 py-0", getStatusColor(member.status))}
               >
                 {member.status}
               </Badge>
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              <div>Level {position.level}</div>
-              <div>Position {position.slot}</div>
+            <div className="text-xs text-muted-foreground text-center">
+              <div>L{position.level}</div>
+              <div>P{position.slot}</div>
             </div>
           </div>
         ) : (
-          <div className="space-y-3 opacity-60">
-            <div className="mx-auto h-12 w-12 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-              <span className="text-xs font-medium text-muted-foreground">Empty</span>
+          <div className="space-y-2 opacity-60 flex flex-col items-center">
+            <div className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+              <span className="text-xs font-medium text-muted-foreground">+</span>
             </div>
             
-            <div className="space-y-1">
-              <h3 className="font-medium text-sm text-muted-foreground">Available</h3>
+            <div className="space-y-1 text-center">
+              <h3 className="font-medium text-xs text-muted-foreground">Open</h3>
               <div className="text-xs text-muted-foreground">
-                <div>Level {position.level}</div>
-                <div>Position {position.slot}</div>
+                <div>L{position.level}</div>
+                <div>P{position.slot}</div>
               </div>
             </div>
           </div>
@@ -101,6 +99,6 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({
       {isAvailable && (
         <div className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full animate-pulse" />
       )}
-    </Card>
+    </div>
   );
 };

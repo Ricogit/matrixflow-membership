@@ -11,7 +11,8 @@ import {
   TrendingUp, 
   DollarSign,
   Network,
-  Clock
+  Clock,
+  Download
 } from 'lucide-react';
 
 const Index = () => {
@@ -38,6 +39,36 @@ const Index = () => {
     }
   };
 
+  const exportData = () => {
+    const exportData = {
+      rootMember,
+      members,
+      stats,
+      exportDate: new Date().toISOString(),
+      matrixType: "2x2 Personal Matrix System"
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `karoo-matrix-data-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-secondary">
       {/* Header */}
@@ -52,10 +83,20 @@ const Index = () => {
                 Personal Matrix Network with Automatic Spillover
               </p>
             </div>
-            <AddMemberDialog 
-              onAddMember={handleAddMember}
-              availablePositions={availablePositions}
-            />
+            <div className="flex items-center gap-4">
+              <AddMemberDialog 
+                onAddMember={handleAddMember}
+                availablePositions={availablePositions}
+              />
+              <Button
+                onClick={exportData}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export Data
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -120,10 +161,21 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-gradient-card shadow-medium">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Recent Activity
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  Recent Activity
+                </CardTitle>
+                <Button
+                  onClick={exportData}
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  Export
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -134,13 +186,21 @@ const Index = () => {
                 ) : (
                   members.slice(-5).reverse().map((member) => (
                     <div key={member.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                      <div>
-                        <p className="font-medium">{member.name}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium">{member.name}</p>
+                          <span className="text-xs text-muted-foreground">
+                            {formatTimestamp(member.joinDate)}
+                          </span>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           Joined Level {member.position.level}, Position {member.position.slot}
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(member.joinDate).toLocaleString()}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           member.status === 'active' ? 'bg-success/20 text-success' :
                           member.status === 'pending' ? 'bg-accent/20 text-accent' :

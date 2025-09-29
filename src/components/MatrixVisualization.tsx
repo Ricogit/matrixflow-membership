@@ -69,7 +69,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             position={{ level: 0, slot: 0 }}
             isAvailable={!matrix['0-0']}
             onClick={() => onNodeClick?.({ level: 0, slot: 0 })}
-            className="w-48"
+            className="w-32 h-32"
           />
         </div>
       </div>
@@ -92,7 +92,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             position={{ level: 1, slot: 0 }}
             isAvailable={!matrix['1-0']}
             onClick={() => onNodeClick?.({ level: 1, slot: 0 })}
-            className="w-40"
+            className="w-28 h-28"
           />
         </div>
         <div className="relative">
@@ -101,7 +101,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             position={{ level: 1, slot: 1 }}
             isAvailable={!matrix['1-1']}
             onClick={() => onNodeClick?.({ level: 1, slot: 1 })}
-            className="w-40"
+            className="w-28 h-28"
           />
         </div>
       </div>
@@ -136,14 +136,14 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             position={{ level: 2, slot: 0 }}
             isAvailable={!matrix['2-0']}
             onClick={() => onNodeClick?.({ level: 2, slot: 0 })}
-            className="w-32"
+            className="w-24 h-24"
           />
           <MatrixNode
             member={matrix['2-1']}
             position={{ level: 2, slot: 1 }}
             isAvailable={!matrix['2-1']}
             onClick={() => onNodeClick?.({ level: 2, slot: 1 })}
-            className="w-32"
+            className="w-24 h-24"
           />
         </div>
         <div className="flex gap-4">
@@ -152,14 +152,14 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             position={{ level: 2, slot: 2 }}
             isAvailable={!matrix['2-2']}
             onClick={() => onNodeClick?.({ level: 2, slot: 2 })}
-            className="w-32"
+            className="w-24 h-24"
           />
           <MatrixNode
             member={matrix['2-3']}
             position={{ level: 2, slot: 3 }}
             isAvailable={!matrix['2-3']}
             onClick={() => onNodeClick?.({ level: 2, slot: 3 })}
-            className="w-32"
+            className="w-24 h-24"
           />
         </div>
       </div>
