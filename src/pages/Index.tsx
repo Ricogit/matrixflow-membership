@@ -102,6 +102,29 @@ const Index = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Matrix Visualization - Top Priority */}
+        <Card className="bg-gradient-card shadow-medium mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5 text-primary" />
+              Matrix Structure (2 Levels Deep)
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Interactive matrix showing member positions with automatic spillover placement
+            </p>
+          </CardHeader>
+          <CardContent>
+            <MatrixVisualization
+              rootMember={currentViewMemberId === rootMember?.id || !currentViewMemberId ? rootMember : undefined}
+              members={getCurrentViewMatrix()}
+              onNodeClick={(position) => {
+                console.log('Node clicked:', position);
+                // Could open member details or assignment dialog
+              }}
+            />
+          </CardContent>
+        </Card>
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
@@ -133,29 +156,6 @@ const Index = () => {
             trend={{ value: 15, isPositive: true }}
           />
         </div>
-
-        {/* Matrix Visualization */}
-        <Card className="bg-gradient-card shadow-medium mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5 text-primary" />
-              Matrix Structure (2 Levels Deep)
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Interactive matrix showing member positions with automatic spillover placement
-            </p>
-          </CardHeader>
-          <CardContent>
-            <MatrixVisualization
-              rootMember={currentViewMemberId === rootMember?.id || !currentViewMemberId ? rootMember : undefined}
-              members={getCurrentViewMatrix()}
-              onNodeClick={(position) => {
-                console.log('Node clicked:', position);
-                // Could open member details or assignment dialog
-              }}
-            />
-          </CardContent>
-        </Card>
 
         {/* Recent Activity & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
