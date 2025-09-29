@@ -14,6 +14,9 @@ export interface Member {
   sponsor?: string;
   status: 'active' | 'inactive' | 'pending';
   earnings?: number;
+  personalMatrix?: {
+    members: Member[];
+  };
 }
 
 export interface MatrixPosition {
@@ -30,4 +33,5 @@ export interface MatrixStats {
   totalEarnings: number;
   matrixFull: boolean;
   availablePositions: number;
+  currentMatrixMembers: number;
 }

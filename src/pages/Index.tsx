@@ -21,7 +21,10 @@ const Index = () => {
     addMember,
     getAvailablePositions,
     getMatrixStats,
-    updateMemberStatus
+    updateMemberStatus,
+    currentViewMemberId,
+    setCurrentViewMemberId,
+    getCurrentViewMatrix
   } = useMatrixLogic();
 
   const stats = getMatrixStats();
@@ -43,10 +46,10 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Matrix Management
+                Karoo Product Club
               </h1>
               <p className="text-muted-foreground mt-1">
-                2x2 Matrix System with Automatic Spillover
+                Personal Matrix Network with Automatic Spillover
               </p>
             </div>
             <AddMemberDialog 
@@ -103,8 +106,8 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <MatrixVisualization
-              rootMember={rootMember}
-              members={members}
+              rootMember={currentViewMemberId === rootMember?.id || !currentViewMemberId ? rootMember : undefined}
+              members={getCurrentViewMatrix()}
               onNodeClick={(position) => {
                 console.log('Node clicked:', position);
                 // Could open member details or assignment dialog

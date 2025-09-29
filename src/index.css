@@ -17,19 +17,19 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
 
-    --primary: 197 100% 48%;
+    --primary: 120 100% 45%;
     --primary-foreground: 0 0% 100%;
     
-    --primary-hover: 197 100% 42%;
-    --primary-glow: 197 80% 65%;
+    --primary-hover: 120 100% 40%;
+    --primary-glow: 120 80% 60%;
 
-    --secondary: 220 15% 95%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 118 15% 95%;
+    --secondary-foreground: 115 25% 27%;
 
-    --muted: 220 15% 95%;
-    --muted-foreground: 215 10% 55%;
+    --muted: 118 15% 95%;
+    --muted-foreground: 115 10% 55%;
 
-    --accent: 183 100% 48%;
+    --accent: 140 100% 45%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
@@ -44,20 +44,20 @@ All colors MUST be HSL.
 
     /* Matrix specific colors */
     --matrix-node: 0 0% 100%;
-    --matrix-node-filled: 197 100% 48%;
-    --matrix-connection: 220 13% 85%;
-    --matrix-highlight: 183 100% 48%;
+    --matrix-node-filled: 120 100% 45%;
+    --matrix-connection: 120 30% 75%;
+    --matrix-highlight: 140 100% 45%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(197 100% 48%), hsl(183 100% 48%));
-    --gradient-secondary: linear-gradient(135deg, hsl(220 15% 97%), hsl(220 15% 95%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 15% 98%));
+    --gradient-primary: linear-gradient(135deg, hsl(120 100% 45%), hsl(140 100% 45%));
+    --gradient-secondary: linear-gradient(135deg, hsl(118 15% 97%), hsl(118 15% 95%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(118 15% 98%));
 
     /* Shadows */
-    --shadow-soft: 0 2px 10px -2px hsl(220 13% 85% / 0.3);
-    --shadow-medium: 0 8px 30px -4px hsl(220 13% 85% / 0.4);
-    --shadow-strong: 0 20px 40px -8px hsl(220 13% 85% / 0.5);
-    --shadow-glow: 0 0 30px hsl(197 100% 48% / 0.2);
+    --shadow-soft: 0 2px 10px -2px hsl(120 30% 75% / 0.3);
+    --shadow-medium: 0 8px 30px -4px hsl(120 30% 75% / 0.4);
+    --shadow-strong: 0 20px 40px -8px hsl(120 30% 75% / 0.5);
+    --shadow-glow: 0 0 30px hsl(120 100% 45% / 0.4);
 
     --radius: 0.5rem;
 
