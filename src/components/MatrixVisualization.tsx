@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 interface MatrixVisualizationProps {
   rootMember?: Member;
   members: Member[];
-  onNodeClick?: (position: { level: number; slot: number }) => void;
+  onNodeClick?: (position: { level: number; slot: number }, member?: Member) => void;
   className?: string;
 }
 
@@ -68,7 +68,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             member={matrix['0-0']}
             position={{ level: 0, slot: 0 }}
             isAvailable={!matrix['0-0']}
-            onClick={() => onNodeClick?.({ level: 0, slot: 0 })}
+            onClick={() => onNodeClick?.({ level: 0, slot: 0 }, matrix['0-0'])}
             className="w-32 h-32"
           />
         </div>
@@ -91,7 +91,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             member={matrix['1-0']}
             position={{ level: 1, slot: 0 }}
             isAvailable={!matrix['1-0']}
-            onClick={() => onNodeClick?.({ level: 1, slot: 0 })}
+            onClick={() => onNodeClick?.({ level: 1, slot: 0 }, matrix['1-0'])}
             className="w-28 h-28"
           />
         </div>
@@ -100,7 +100,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             member={matrix['1-1']}
             position={{ level: 1, slot: 1 }}
             isAvailable={!matrix['1-1']}
-            onClick={() => onNodeClick?.({ level: 1, slot: 1 })}
+            onClick={() => onNodeClick?.({ level: 1, slot: 1 }, matrix['1-1'])}
             className="w-28 h-28"
           />
         </div>
@@ -135,14 +135,14 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             member={matrix['2-0']}
             position={{ level: 2, slot: 0 }}
             isAvailable={!matrix['2-0']}
-            onClick={() => onNodeClick?.({ level: 2, slot: 0 })}
+            onClick={() => onNodeClick?.({ level: 2, slot: 0 }, matrix['2-0'])}
             className="w-24 h-24"
           />
           <MatrixNode
             member={matrix['2-1']}
             position={{ level: 2, slot: 1 }}
             isAvailable={!matrix['2-1']}
-            onClick={() => onNodeClick?.({ level: 2, slot: 1 })}
+            onClick={() => onNodeClick?.({ level: 2, slot: 1 }, matrix['2-1'])}
             className="w-24 h-24"
           />
         </div>
@@ -151,14 +151,14 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
             member={matrix['2-2']}
             position={{ level: 2, slot: 2 }}
             isAvailable={!matrix['2-2']}
-            onClick={() => onNodeClick?.({ level: 2, slot: 2 })}
+            onClick={() => onNodeClick?.({ level: 2, slot: 2 }, matrix['2-2'])}
             className="w-24 h-24"
           />
           <MatrixNode
             member={matrix['2-3']}
             position={{ level: 2, slot: 3 }}
             isAvailable={!matrix['2-3']}
-            onClick={() => onNodeClick?.({ level: 2, slot: 3 })}
+            onClick={() => onNodeClick?.({ level: 2, slot: 3 }, matrix['2-3'])}
             className="w-24 h-24"
           />
         </div>

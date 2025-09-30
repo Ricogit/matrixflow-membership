@@ -150,7 +150,8 @@ export const useMatrixLogic = () => {
     const totalMembers = members.length + (rootMember ? 1 : 0);
     const activeMembers = members.filter(m => m.status === 'active').length + (rootMember ? 1 : 0);
     const pendingMembers = members.filter(m => m.status === 'pending').length;
-    const totalEarnings = members.reduce((sum, m) => sum + (m.earnings || 0), 0);
+    // Calculate total earnings: R100 per member (excluding root)
+    const totalEarnings = members.length * 100;
     const availablePositions = getAvailablePositions().length;
     const matrixFull = availablePositions === 0;
 

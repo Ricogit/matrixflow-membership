@@ -117,9 +117,10 @@ const Index = () => {
             <MatrixVisualization
               rootMember={currentViewMemberId === rootMember?.id || !currentViewMemberId ? rootMember : undefined}
               members={getCurrentViewMatrix()}
-              onNodeClick={(position) => {
-                console.log('Node clicked:', position);
-                // Could open member details or assignment dialog
+              onNodeClick={(position, member) => {
+                if (member) {
+                  setCurrentViewMemberId(member.id);
+                }
               }}
             />
           </CardContent>
@@ -150,8 +151,8 @@ const Index = () => {
           />
           <StatsCard
             title="Total Earnings"
-            value={`$${stats.totalEarnings.toLocaleString()}`}
-            description="Cumulative network earnings"
+            value={`R${stats.totalEarnings.toLocaleString()}`}
+            description="R100 joining fee per member"
             icon={DollarSign}
             trend={{ value: 15, isPositive: true }}
           />
