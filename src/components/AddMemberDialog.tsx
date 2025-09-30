@@ -48,7 +48,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       phone: formData.phone || undefined,
       sponsor: selectedSponsor?.name || undefined,
       position: formData.position,
-      status: 'pending',
+      status: 'active',
       earnings: 0
     });
 

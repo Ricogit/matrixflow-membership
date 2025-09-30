@@ -8,50 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 15% 97%;
-    --foreground: 215 25% 27%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 120 100% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 120 100% 50%;
+    --primary-foreground: 222.2 47.4% 11.2%;
     
-    --primary-hover: 120 100% 40%;
-    --primary-glow: 120 80% 60%;
+    --primary-hover: 120 100% 45%;
+    --primary-glow: 120 80% 65%;
 
-    --secondary: 118 15% 95%;
-    --secondary-foreground: 115 25% 27%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 118 15% 95%;
-    --muted-foreground: 115 10% 55%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 140 100% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 197 100% 48%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
 
     /* Matrix specific colors */
-    --matrix-node: 0 0% 100%;
-    --matrix-node-filled: 120 100% 45%;
-    --matrix-connection: 120 30% 75%;
-    --matrix-highlight: 140 100% 45%;
+    --matrix-node: 217.2 32.6% 17.5%;
+    --matrix-node-filled: 120 100% 50%;
+    --matrix-connection: 120 30% 40%;
+    --matrix-highlight: 120 100% 60%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(120 100% 45%), hsl(140 100% 45%));
-    --gradient-secondary: linear-gradient(135deg, hsl(118 15% 97%), hsl(118 15% 95%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(118 15% 98%));
+    --gradient-primary: linear-gradient(135deg, hsl(120 100% 50%), hsl(140 100% 50%));
+    --gradient-secondary: linear-gradient(135deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 17.5%));
+    --gradient-card: linear-gradient(145deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 10%));
 
     /* Shadows */
     --shadow-soft: 0 2px 10px -2px hsl(120 30% 75% / 0.3);
@@ -61,20 +61,13 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
