@@ -28,8 +28,14 @@ const Index = () => {
     getCurrentViewMatrix
   } = useMatrixLogic();
 
+  const [selectedMemberView, setSelectedMemberView] = React.useState<string | undefined>();
+
   const stats = getMatrixStats();
   const availablePositions = getAvailablePositions();
+
+  const selectedMember = selectedMemberView 
+    ? (selectedMemberView === rootMember?.id ? rootMember : members.find(m => m.id === selectedMemberView))
+    : undefined;
 
   const handleAddMember = (memberData: Parameters<typeof addMember>[0]) => {
     try {
@@ -102,29 +108,66 @@ const Index = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Matrix Visualization - Top Priority */}
+        {/* Main Matrix Visualization - Always shows root */}
         <Card className="bg-gradient-card shadow-medium mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Network className="h-5 w-5 text-primary" />
-              Matrix Structure (2 Levels Deep)
+              Main Matrix Structure
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Interactive matrix showing member positions with automatic spillover placement
+              Click on any member to view their personal matrix below
             </p>
           </CardHeader>
           <CardContent>
             <MatrixVisualization
-              rootMember={currentViewMemberId === rootMember?.id || !currentViewMemberId ? rootMember : undefined}
-              members={getCurrentViewMatrix()}
+              rootMember={rootMember}
+              members={rootMember?.personalMatrix?.members || []}
               onNodeClick={(position, member) => {
                 if (member) {
-                  setCurrentViewMemberId(member.id);
+                  setSelectedMemberView(member.id);
                 }
               }}
             />
           </CardContent>
         </Card>
+
+        {/* Selected Member's Personal Matrix */}
+        {selectedMember && (
+          <Card className="bg-gradient-card shadow-medium mb-8">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    {selectedMember.name}'s Personal Matrix
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Viewing {selectedMember.name}'s downline structure
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setSelectedMemberView(undefined)}
+                  variant="outline"
+                  size="sm"
+                >
+                  Close View
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <MatrixVisualization
+                rootMember={selectedMember}
+                members={selectedMember.personalMatrix?.members || []}
+                onNodeClick={(position, member) => {
+                  if (member) {
+                    setSelectedMemberView(member.id);
+                  }
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
