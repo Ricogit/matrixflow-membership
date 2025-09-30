@@ -5,6 +5,7 @@ import { MatrixVisualization } from '@/components/MatrixVisualization';
 import { StatsCard } from '@/components/StatsCard';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { useMatrixLogic } from '@/hooks/useMatrixLogic';
+import { Member } from '@/types/member';
 import { 
   Users, 
   UserPlus, 
@@ -93,6 +94,7 @@ const Index = () => {
               <AddMemberDialog 
                 onAddMember={handleAddMember}
                 availablePositions={availablePositions}
+                members={[rootMember, ...members].filter(Boolean) as Member[]}
               />
               <Button
                 onClick={exportData}

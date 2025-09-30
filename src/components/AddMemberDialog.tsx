@@ -11,18 +11,19 @@ import { useToast } from '@/hooks/use-toast';
 interface AddMemberDialogProps {
   onAddMember: (member: Omit<Member, 'id' | 'joinDate'>) => void;
   availablePositions: { level: number; slot: number }[];
+  members: Member[];
 }
 
 export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   onAddMember,
-  availablePositions
+  availablePositions,
+  members
 }) => {
   const [open, setOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
     name: '',
-    email: '',
     phone: '',
-    sponsor: '',
+    sponsorId: '',
     position: { level: 1, slot: 0 }
   });
   const { toast } = useToast();
@@ -30,7 +31,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email) {
+    if (!formData.name) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -39,11 +40,13 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       return;
     }
 
+    const selectedSponsor = members.find(m => m.id === formData.sponsorId);
+
     onAddMember({
       name: formData.name,
-      email: formData.email,
+      email: `${formData.name.toLowerCase().replace(/\s+/g, '.')}@placeholder.com`,
       phone: formData.phone || undefined,
-      sponsor: formData.sponsor || undefined,
+      sponsor: selectedSponsor?.name || undefined,
       position: formData.position,
       status: 'pending',
       earnings: 0
@@ -51,9 +54,8 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
     setFormData({
       name: '',
-      email: '',
       phone: '',
-      sponsor: '',
+      sponsorId: '',
       position: { level: 1, slot: 0 }
     });
     
@@ -90,18 +92,6 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Enter email address"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
@@ -113,13 +103,22 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sponsor">Sponsor (Optional)</Label>
-            <Input
-              id="sponsor"
-              value={formData.sponsor}
-              onChange={(e) => setFormData(prev => ({ ...prev, sponsor: e.target.value }))}
-              placeholder="Enter sponsor's name"
-            />
+            <Label htmlFor="sponsor">Preferred Sponsor (Direct Partner)</Label>
+            <Select
+              value={formData.sponsorId}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, sponsorId: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a sponsor" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {availablePositions.length > 0 && (
