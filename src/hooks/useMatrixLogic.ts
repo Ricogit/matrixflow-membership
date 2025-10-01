@@ -6,63 +6,31 @@ export const useMatrixLogic = () => {
   const [rootMember, setRootMember] = useState<Member | undefined>();
   const [currentViewMemberId, setCurrentViewMemberId] = useState<string | undefined>();
 
-  // Check if matrix is full (7 total: 2 in level 1 + 4 in level 2 + 1 root = 7)
+  // Check if matrix is full (6 positions: 2 in level 1 + 4 in level 2)
   const isMatrixFull = (matrixMembers: Member[]): boolean => {
-    return matrixMembers.length >= 6; // 6 members under root (2 + 4)
+    return matrixMembers.length >= 6;
   };
 
-  // Find available position in a specific matrix
+  // Find next available position left-to-right in a matrix
   const findNextAvailablePositionInMatrix = (matrixMembers: Member[]): { level: number; slot: number } | null => {
-    // Check level 1 first (positions 0, 1)
-    const level1Positions = [0, 1];
-    for (const slot of level1Positions) {
-      const exists = matrixMembers.some(m => m.position.level === 1 && m.position.slot === slot);
-      if (!exists) {
-        return { level: 1, slot };
-      }
-    }
+    // Fill left to right: Level 1 (slots 0, 1), then Level 2 (slots 0, 1, 2, 3)
+    const allPositions = [
+      { level: 1, slot: 0 },
+      { level: 1, slot: 1 },
+      { level: 2, slot: 0 },
+      { level: 2, slot: 1 },
+      { level: 2, slot: 2 },
+      { level: 2, slot: 3 }
+    ];
 
-    // Check level 2 (positions 0, 1, 2, 3)
-    const level2Positions = [0, 1, 2, 3];
-    for (const slot of level2Positions) {
-      const exists = matrixMembers.some(m => m.position.level === 2 && m.position.slot === slot);
+    for (const pos of allPositions) {
+      const exists = matrixMembers.some(m => m.position.level === pos.level && m.position.slot === pos.slot);
       if (!exists) {
-        return { level: 2, slot };
+        return pos;
       }
     }
 
     return null; // Matrix is full
-  };
-
-  // Find spillover position in downline (breadth-first search)
-  const findSpilloverPosition = (sponsorId: string): { memberId: string; position: { level: number; slot: number } } | null => {
-    const queue: string[] = [sponsorId];
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      if (visited.has(currentId)) continue;
-      visited.add(currentId);
-
-      // Get current member's matrix
-      const currentMember = currentId === rootMember?.id ? rootMember : members.find(m => m.id === currentId);
-      if (!currentMember) continue;
-
-      const matrixMembers = currentMember.personalMatrix?.members || [];
-
-      // Check if this member has available positions
-      if (!isMatrixFull(matrixMembers)) {
-        const position = findNextAvailablePositionInMatrix(matrixMembers);
-        if (position) {
-          return { memberId: currentId, position };
-        }
-      }
-
-      // Add downline members to queue for breadth-first search
-      matrixMembers.forEach(m => queue.push(m.id));
-    }
-
-    return null;
   };
 
   // Legacy function for backwards compatibility
@@ -88,9 +56,9 @@ export const useMatrixLogic = () => {
       return;
     }
 
-    // STEP 1: Check Available Positions
-    let sponsorId = memberData.position.parentId || (currentViewMemberId || rootMember.id);
-    let sponsor = sponsorId === rootMember.id ? rootMember : members.find(m => m.id === sponsorId);
+    // Get sponsor (upline who will receive this member in their matrix)
+    const sponsorId = memberData.position.parentId || (currentViewMemberId || rootMember.id);
+    const sponsor = sponsorId === rootMember.id ? rootMember : members.find(m => m.id === sponsorId);
 
     if (!sponsor) {
       throw new Error('Sponsor not found');
@@ -98,36 +66,19 @@ export const useMatrixLogic = () => {
 
     const sponsorMembers = sponsor.personalMatrix?.members || [];
     
-    // STEP 2: Check Direct Spot vs Spillover
-    let finalSponsorId = sponsorId;
-    let position = memberData.position;
-
-    // Check if direct sponsor has space
-    if (isMatrixFull(sponsorMembers)) {
-      // Spillover to downline - find first available position
-      const spillover = findSpilloverPosition(sponsorId);
-      if (spillover) {
-        finalSponsorId = spillover.memberId;
-        position = spillover.position;
-      } else {
-        throw new Error('No available positions in entire downline');
-      }
-    } else {
-      // Direct spot available
-      const availablePosition = findNextAvailablePositionInMatrix(sponsorMembers);
-      if (availablePosition) {
-        position = availablePosition;
-      } else {
-        throw new Error('Unexpected error: Matrix should have space');
-      }
+    // Find next available position in sponsor's matrix (left to right)
+    const position = findNextAvailablePositionInMatrix(sponsorMembers);
+    
+    if (!position) {
+      throw new Error('Sponsor matrix is full. No available positions.');
     }
 
-    // STEP 3: Place User & Pay
+    // Create new member
     const newMember: Member = {
       ...memberData,
       id: newId,
       joinDate: new Date().toISOString(),
-      position: { ...position, parentId: finalSponsorId },
+      position: { ...position, parentId: sponsorId },
       status: 'active',
       personalMatrix: { members: [] },
       earnings: 0
@@ -136,8 +87,8 @@ export const useMatrixLogic = () => {
     // Add to global members list
     setMembers(prev => [...prev, newMember]);
 
-    // Add to final sponsor's personal matrix
-    if (finalSponsorId === rootMember.id) {
+    // Add to sponsor's personal matrix
+    if (sponsorId === rootMember.id) {
       setRootMember(prev => prev ? {
         ...prev,
         personalMatrix: { 
@@ -146,7 +97,7 @@ export const useMatrixLogic = () => {
       } : prev);
     } else {
       setMembers(prev => prev.map(m => 
-        m.id === finalSponsorId ? {
+        m.id === sponsorId ? {
           ...m,
           personalMatrix: { 
             members: [...(m.personalMatrix?.members || []), newMember] 
@@ -155,11 +106,10 @@ export const useMatrixLogic = () => {
       ));
     }
 
-    // STEP 4: Check if Matrix Full (7/7) and Cycle
+    // Check if matrix is full (6/6) and trigger cycle
     const updatedSponsorMembers = [...sponsorMembers, newMember];
     if (isMatrixFull(updatedSponsorMembers)) {
-      // Matrix is full - trigger cycle (can add payment/notification logic here)
-      console.log(`Matrix cycled for member: ${finalSponsorId}`);
+      console.log(`Matrix cycled for member: ${sponsorId}`);
     }
   };
 
