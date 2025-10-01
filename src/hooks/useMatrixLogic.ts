@@ -39,6 +39,28 @@ export const useMatrixLogic = () => {
     return findNextAvailablePositionInMatrix(currentMatrix);
   };
 
+  // Find the matrix owner (upline) for a given member
+  const findMatrixOwner = (memberId: string): string => {
+    // If it's the root, the root is the matrix owner
+    if (memberId === rootMember?.id) {
+      return memberId;
+    }
+
+    // Find which member's matrix contains this memberId
+    if (rootMember?.personalMatrix?.members.some(m => m.id === memberId)) {
+      return rootMember.id;
+    }
+
+    for (const member of members) {
+      if (member.personalMatrix?.members.some(m => m.id === memberId)) {
+        return member.id;
+      }
+    }
+
+    // Default to root if not found
+    return rootMember?.id || memberId;
+  };
+
   const addMember = (memberData: Omit<Member, 'id' | 'joinDate'>) => {
     const newId = `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
@@ -56,21 +78,26 @@ export const useMatrixLogic = () => {
       return;
     }
 
-    // Get sponsor (upline who will receive this member in their matrix)
-    const sponsorId = memberData.position.parentId || (currentViewMemberId || rootMember.id);
-    const sponsor = sponsorId === rootMember.id ? rootMember : members.find(m => m.id === sponsorId);
+    // Get the recruiter/sponsor
+    const recruiterId = memberData.position.parentId || (currentViewMemberId || rootMember.id);
+    
+    // Find the matrix owner (the upline whose matrix should be filled)
+    // If recruiter is root, new member goes in root's matrix
+    // If recruiter is in someone's matrix, new member goes in that same matrix
+    const matrixOwnerId = findMatrixOwner(recruiterId);
+    const matrixOwner = matrixOwnerId === rootMember.id ? rootMember : members.find(m => m.id === matrixOwnerId);
 
-    if (!sponsor) {
-      throw new Error('Sponsor not found');
+    if (!matrixOwner) {
+      throw new Error('Matrix owner not found');
     }
 
-    const sponsorMembers = sponsor.personalMatrix?.members || [];
+    const matrixMembers = matrixOwner.personalMatrix?.members || [];
     
-    // Find next available position in sponsor's matrix (left to right)
-    const position = findNextAvailablePositionInMatrix(sponsorMembers);
+    // Find next available position in the matrix owner's matrix (left to right)
+    const position = findNextAvailablePositionInMatrix(matrixMembers);
     
     if (!position) {
-      throw new Error('Sponsor matrix is full. No available positions.');
+      throw new Error('Matrix is full. No available positions.');
     }
 
     // Create new member
@@ -78,7 +105,7 @@ export const useMatrixLogic = () => {
       ...memberData,
       id: newId,
       joinDate: new Date().toISOString(),
-      position: { ...position, parentId: sponsorId },
+      position: { ...position, parentId: matrixOwnerId },
       status: 'active',
       personalMatrix: { members: [] },
       earnings: 0
@@ -87,8 +114,8 @@ export const useMatrixLogic = () => {
     // Add to global members list
     setMembers(prev => [...prev, newMember]);
 
-    // Add to sponsor's personal matrix
-    if (sponsorId === rootMember.id) {
+    // Add to matrix owner's personal matrix
+    if (matrixOwnerId === rootMember.id) {
       setRootMember(prev => prev ? {
         ...prev,
         personalMatrix: { 
@@ -97,7 +124,7 @@ export const useMatrixLogic = () => {
       } : prev);
     } else {
       setMembers(prev => prev.map(m => 
-        m.id === sponsorId ? {
+        m.id === matrixOwnerId ? {
           ...m,
           personalMatrix: { 
             members: [...(m.personalMatrix?.members || []), newMember] 
@@ -107,9 +134,9 @@ export const useMatrixLogic = () => {
     }
 
     // Check if matrix is full (6/6) and trigger cycle
-    const updatedSponsorMembers = [...sponsorMembers, newMember];
-    if (isMatrixFull(updatedSponsorMembers)) {
-      console.log(`Matrix cycled for member: ${sponsorId}`);
+    const updatedMatrixMembers = [...matrixMembers, newMember];
+    if (isMatrixFull(updatedMatrixMembers)) {
+      console.log(`Matrix cycled for member: ${matrixOwnerId}`);
     }
   };
 
