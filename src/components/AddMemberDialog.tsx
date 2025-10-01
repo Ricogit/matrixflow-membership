@@ -47,7 +47,10 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       email: `${formData.name.toLowerCase().replace(/\s+/g, '.')}@placeholder.com`,
       phone: formData.phone || undefined,
       sponsor: selectedSponsor?.name || undefined,
-      position: formData.position,
+      position: { 
+        ...formData.position, 
+        parentId: formData.sponsorId || undefined 
+      },
       status: 'active',
       earnings: 0
     });
