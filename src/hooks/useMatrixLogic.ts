@@ -49,6 +49,7 @@ export const useMatrixLogic = () => {
   // Find next available position in matrix following binary tree structure
   const findNextPositionInBinaryMatrix = (matrixMembers: Member[], matrixOwnerId: string): { level: number; slot: number; parentMemberId?: string } | null => {
     // Check Level 1 first (slots 0, 1)
+    // L1 members should have the matrix owner as their parent
     for (let slot = 0; slot < 2; slot++) {
       const exists = matrixMembers.some(m => m.position.level === 1 && m.position.slot === slot);
       if (!exists) {
@@ -57,6 +58,8 @@ export const useMatrixLogic = () => {
     }
 
     // Check Level 2 (slots 0, 1, 2, 3) - must check which L1 parent owns each slot
+    // L2P0, L2P1 should have L1P0 as parent
+    // L2P2, L2P3 should have L1P1 as parent
     for (let slot = 0; slot < 4; slot++) {
       const exists = matrixMembers.some(m => m.position.level === 2 && m.position.slot === slot);
       if (!exists) {
@@ -64,7 +67,12 @@ export const useMatrixLogic = () => {
         const l1ParentSlot = getL1ParentForL2Slot(slot);
         const l1Parent = matrixMembers.find(m => m.position.level === 1 && m.position.slot === l1ParentSlot);
         
-        return { level: 2, slot, parentMemberId: l1Parent?.id };
+        // L2 positions must have an L1 parent - if it doesn't exist, this slot isn't available yet
+        if (!l1Parent) {
+          continue;
+        }
+        
+        return { level: 2, slot, parentMemberId: l1Parent.id };
       }
     }
 
