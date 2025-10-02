@@ -47,15 +47,12 @@ export const useMatrixLogic = () => {
   };
 
   // Find next available position in matrix following binary tree structure
-  const findNextPositionInBinaryMatrix = (matrixMembers: Member[]): { level: number; slot: number; parentMemberId?: string } | null => {
-    const matrixOwnerId = currentViewMemberId || rootMember?.id;
-    const matrixOwner = matrixOwnerId === rootMember?.id ? rootMember : members.find(m => m.id === matrixOwnerId);
-    
+  const findNextPositionInBinaryMatrix = (matrixMembers: Member[], matrixOwnerId: string): { level: number; slot: number; parentMemberId?: string } | null => {
     // Check Level 1 first (slots 0, 1)
     for (let slot = 0; slot < 2; slot++) {
       const exists = matrixMembers.some(m => m.position.level === 1 && m.position.slot === slot);
       if (!exists) {
-        return { level: 1, slot };
+        return { level: 1, slot, parentMemberId: matrixOwnerId };
       }
     }
 
@@ -119,7 +116,7 @@ export const useMatrixLogic = () => {
     const matrixMembers = matrixOwner.personalMatrix?.members || [];
     
     // Find next available position following binary tree structure
-    const positionData = findNextPositionInBinaryMatrix(matrixMembers);
+    const positionData = findNextPositionInBinaryMatrix(matrixMembers, matrixOwnerId);
     
     if (!positionData) {
       throw new Error('Matrix is full. No available positions.');
@@ -135,7 +132,7 @@ export const useMatrixLogic = () => {
       position: { 
         level, 
         slot, 
-        parentId: level === 2 && parentMemberId ? parentMemberId : matrixOwnerId 
+        parentId: parentMemberId || matrixOwnerId
       },
       status: 'active',
       personalMatrix: { members: [] },
