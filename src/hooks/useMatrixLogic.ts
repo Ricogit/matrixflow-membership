@@ -39,20 +39,39 @@ export const useMatrixLogic = () => {
     return findNextAvailablePositionInMatrix(currentMatrix);
   };
 
-  // Find the matrix owner (upline) for a given recruiter
-  const findMatrixOwnerForRecruiter = (recruiterId: string): string | null => {
-    if (recruiterId === rootMember?.id) {
-      // If root is recruiting, new member goes in root's matrix
-      return rootMember.id;
+  // Get the L1 parent for a given L2 slot (binary tree structure)
+  const getL1ParentForL2Slot = (slot: number): number => {
+    // L2P0, L2P1 belong to L1P0
+    // L2P2, L2P3 belong to L1P1
+    return slot < 2 ? 0 : 1;
+  };
+
+  // Find next available position in matrix following binary tree structure
+  const findNextPositionInBinaryMatrix = (matrixMembers: Member[]): { level: number; slot: number; parentMemberId?: string } | null => {
+    const matrixOwnerId = currentViewMemberId || rootMember?.id;
+    const matrixOwner = matrixOwnerId === rootMember?.id ? rootMember : members.find(m => m.id === matrixOwnerId);
+    
+    // Check Level 1 first (slots 0, 1)
+    for (let slot = 0; slot < 2; slot++) {
+      const exists = matrixMembers.some(m => m.position.level === 1 && m.position.slot === slot);
+      if (!exists) {
+        return { level: 1, slot };
+      }
     }
-    
-    // Find the recruiter
-    const recruiter = members.find(m => m.id === recruiterId);
-    if (!recruiter) return null;
-    
-    // The new member should go in the recruiter's upline's matrix
-    // The upline is the recruiter's parentId
-    return recruiter.position.parentId || rootMember?.id || null;
+
+    // Check Level 2 (slots 0, 1, 2, 3) - must check which L1 parent owns each slot
+    for (let slot = 0; slot < 4; slot++) {
+      const exists = matrixMembers.some(m => m.position.level === 2 && m.position.slot === slot);
+      if (!exists) {
+        // Find the L1 parent that owns this L2 slot
+        const l1ParentSlot = getL1ParentForL2Slot(slot);
+        const l1Parent = matrixMembers.find(m => m.position.level === 1 && m.position.slot === l1ParentSlot);
+        
+        return { level: 2, slot, parentMemberId: l1Parent?.id };
+      }
+    }
+
+    return null; // Matrix is full
   };
 
   const addMember = (memberData: Omit<Member, 'id' | 'joinDate'>) => {
@@ -80,14 +99,18 @@ export const useMatrixLogic = () => {
       throw new Error('Recruiter not found');
     }
 
-    // Find the matrix owner (the upline whose matrix should be filled)
-    const matrixOwnerId = findMatrixOwnerForRecruiter(recruiterId);
+    // Determine matrix owner (upline whose matrix gets filled)
+    // If recruiter is root, new member goes in root's matrix
+    // If recruiter is in someone's matrix, new member goes in recruiter's upline's matrix
+    let matrixOwnerId: string;
     
-    if (!matrixOwnerId) {
-      throw new Error('Matrix owner not found');
+    if (recruiterId === rootMember?.id) {
+      matrixOwnerId = rootMember.id;
+    } else {
+      // New member goes into recruiter's upline matrix
+      matrixOwnerId = recruiter.position.parentId || rootMember?.id || '';
     }
 
-    // Get matrix owner and their current matrix
     const matrixOwner = matrixOwnerId === rootMember.id ? rootMember : members.find(m => m.id === matrixOwnerId);
     if (!matrixOwner) {
       throw new Error('Matrix owner not found');
@@ -95,19 +118,25 @@ export const useMatrixLogic = () => {
 
     const matrixMembers = matrixOwner.personalMatrix?.members || [];
     
-    // Find next available position in matrix owner's matrix (left to right)
-    const position = findNextAvailablePositionInMatrix(matrixMembers);
+    // Find next available position following binary tree structure
+    const positionData = findNextPositionInBinaryMatrix(matrixMembers);
     
-    if (!position) {
-      throw new Error('Matrix is full. No available positions in upline matrix.');
+    if (!positionData) {
+      throw new Error('Matrix is full. No available positions.');
     }
+
+    const { level, slot, parentMemberId } = positionData;
 
     // Create new member
     const newMember: Member = {
       ...memberData,
       id: newId,
       joinDate: new Date().toISOString(),
-      position: { ...position, parentId: recruiterId }, // parentId tracks who recruited them
+      position: { 
+        level, 
+        slot, 
+        parentId: level === 2 && parentMemberId ? parentMemberId : matrixOwnerId 
+      },
       status: 'active',
       personalMatrix: { members: [] },
       earnings: 0
