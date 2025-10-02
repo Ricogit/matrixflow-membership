@@ -39,26 +39,30 @@ export const useMatrixLogic = () => {
     return findNextAvailablePositionInMatrix(currentMatrix);
   };
 
-  // Find the matrix owner (upline) for a given member
-  const findMatrixOwner = (memberId: string): string => {
-    // If it's the root, the root is the matrix owner
-    if (memberId === rootMember?.id) {
-      return memberId;
-    }
-
-    // Find which member's matrix contains this memberId
-    if (rootMember?.personalMatrix?.members.some(m => m.id === memberId)) {
-      return rootMember.id;
-    }
-
-    for (const member of members) {
-      if (member.personalMatrix?.members.some(m => m.id === memberId)) {
-        return member.id;
+  // Find which matrix has available space for placement (pass-up logic)
+  const findMatrixForPlacement = (recruiterId: string): { ownerId: string; position: { level: number; slot: number } } | null => {
+    // Start with the recruiter and move up the chain
+    let currentOwnerId = recruiterId;
+    
+    while (currentOwnerId) {
+      const currentOwner = currentOwnerId === rootMember?.id ? rootMember : members.find(m => m.id === currentOwnerId);
+      if (!currentOwner) break;
+      
+      // Get all members in this owner's matrix (from their personalMatrix members)
+      const matrixMembers = currentOwner.personalMatrix?.members || [];
+      
+      // Check if there's space in this matrix
+      const position = findNextAvailablePositionInMatrix(matrixMembers);
+      
+      if (position) {
+        return { ownerId: currentOwnerId, position };
       }
+      
+      // Matrix is full, move up to the parent
+      currentOwnerId = currentOwner.position.parentId || '';
     }
-
-    // Default to root if not found
-    return rootMember?.id || memberId;
+    
+    return null;
   };
 
   const addMember = (memberData: Omit<Member, 'id' | 'joinDate'>) => {
@@ -86,22 +90,21 @@ export const useMatrixLogic = () => {
       throw new Error('Recruiter not found');
     }
 
-    // Get recruiter's personal matrix to find placement
-    const recruiterPersonalMatrix = recruiter.personalMatrix?.members || [];
+    // Find matrix placement using pass-up logic
+    const placement = findMatrixForPlacement(recruiterId);
     
-    // Find next available position in recruiter's personal matrix (left to right)
-    const position = findNextAvailablePositionInMatrix(recruiterPersonalMatrix);
-    
-    if (!position) {
-      throw new Error('Personal matrix is full. No available positions.');
+    if (!placement) {
+      throw new Error('No available positions in upline matrices.');
     }
+
+    const { ownerId: matrixOwnerId, position } = placement;
 
     // Create new member
     const newMember: Member = {
       ...memberData,
       id: newId,
       joinDate: new Date().toISOString(),
-      position: { ...position, parentId: recruiterId },
+      position: { ...position, parentId: recruiterId }, // parentId tracks who recruited them
       status: 'active',
       personalMatrix: { members: [] },
       earnings: 0
@@ -110,8 +113,8 @@ export const useMatrixLogic = () => {
     // Add to global members list
     setMembers(prev => [...prev, newMember]);
 
-    // Add to recruiter's personal matrix
-    if (recruiterId === rootMember.id) {
+    // Add to matrix owner's personal matrix (for display in their matrix view)
+    if (matrixOwnerId === rootMember.id) {
       setRootMember(prev => prev ? {
         ...prev,
         personalMatrix: { 
@@ -120,7 +123,7 @@ export const useMatrixLogic = () => {
       } : prev);
     } else {
       setMembers(prev => prev.map(m => 
-        m.id === recruiterId ? {
+        m.id === matrixOwnerId ? {
           ...m,
           personalMatrix: { 
             members: [...(m.personalMatrix?.members || []), newMember] 
@@ -129,10 +132,11 @@ export const useMatrixLogic = () => {
       ));
     }
 
-    // Check if personal matrix is full (6/6) and trigger cycle
-    const updatedPersonalMatrix = [...recruiterPersonalMatrix, newMember];
-    if (isMatrixFull(updatedPersonalMatrix)) {
-      console.log(`Personal matrix cycled for member: ${recruiterId}`);
+    // Check if matrix is full (6/6) and trigger cycle
+    const matrixOwner = matrixOwnerId === rootMember.id ? rootMember : members.find(m => m.id === matrixOwnerId);
+    const updatedMatrix = matrixOwner?.personalMatrix?.members || [];
+    if (isMatrixFull(updatedMatrix)) {
+      console.log(`Matrix cycled for member: ${matrixOwnerId}`);
     }
   };
 
