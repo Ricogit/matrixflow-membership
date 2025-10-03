@@ -225,13 +225,13 @@ const Index = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
                 {members.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
                     No members yet. Add your first member to get started!
                   </p>
                 ) : (
-                  members.slice(-5).reverse().map((member) => (
+                  members.slice().reverse().map((member) => (
                     <div key={member.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
