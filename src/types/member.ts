@@ -17,6 +17,8 @@ export interface Member {
   personalMatrix?: {
     members: Member[];
   };
+  stage: number; // Current stage level (1-7)
+  directUplineId?: string; // Direct recruiter/sponsor ID for stage progression
 }
 
 export interface MatrixPosition {

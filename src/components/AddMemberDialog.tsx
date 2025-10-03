@@ -52,7 +52,9 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         parentId: formData.sponsorId || undefined 
       },
       status: 'active',
-      earnings: 0
+      earnings: 0,
+      stage: 1, // Default stage (will be overridden by hook logic)
+      directUplineId: formData.sponsorId || undefined
     });
 
     setFormData({

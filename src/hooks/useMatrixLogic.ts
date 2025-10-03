@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Member, MatrixStats } from '@/types/member';
+import { getNextStage } from '@/types/stages';
 
 export const useMatrixLogic = () => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -89,7 +90,9 @@ export const useMatrixLogic = () => {
         id: newId,
         joinDate: new Date().toISOString(),
         position: { level: 0, slot: 0 },
-        personalMatrix: { members: [] }
+        personalMatrix: { members: [] },
+        stage: 1, // Root starts at Stage 1
+        directUplineId: undefined
       };
       setRootMember(newRootMember);
       setCurrentViewMemberId(newId);
@@ -132,7 +135,7 @@ export const useMatrixLogic = () => {
 
     const { level, slot, parentMemberId } = positionData;
 
-    // Create new member
+    // Create new member - inherits stage from direct recruiter
     const newMember: Member = {
       ...memberData,
       id: newId,
@@ -144,7 +147,9 @@ export const useMatrixLogic = () => {
       },
       status: 'active',
       personalMatrix: { members: [] },
-      earnings: 0
+      earnings: 0,
+      stage: recruiter.stage, // Inherit stage from direct recruiter
+      directUplineId: recruiterId // Track direct upline for stage progression
     };
 
     // Add to global members list
@@ -208,7 +213,7 @@ export const useMatrixLogic = () => {
     // Check if matrix is full (6/6) and trigger cycle
     const updatedMatrix = [...matrixMembers, newMember];
     if (isMatrixFull(updatedMatrix)) {
-      console.log(`Matrix cycled for member: ${matrixOwnerId}`);
+      cycleMatrixAndProgressStage(matrixOwnerId);
     }
   };
 
@@ -273,6 +278,51 @@ export const useMatrixLogic = () => {
     setMembers(prev => prev.map(m => 
       m.id === memberId ? { ...m, status } : m
     ));
+  };
+
+  const cycleMatrixAndProgressStage = (matrixOwnerId: string) => {
+    console.log(`Matrix cycled for member: ${matrixOwnerId}`);
+    
+    const matrixOwner = matrixOwnerId === rootMember?.id ? rootMember : members.find(m => m.id === matrixOwnerId);
+    if (!matrixOwner) return;
+
+    // Get next stage
+    const nextStage = getNextStage(matrixOwner.stage);
+    if (!nextStage) {
+      console.log('Member has reached the final stage');
+      return;
+    }
+
+    // Find the direct upline's stage to follow
+    let targetStage = nextStage.level;
+    if (matrixOwner.directUplineId) {
+      const directUpline = matrixOwner.directUplineId === rootMember?.id 
+        ? rootMember 
+        : members.find(m => m.id === matrixOwner.directUplineId);
+      
+      if (directUpline && directUpline.stage >= targetStage) {
+        targetStage = directUpline.stage;
+      }
+    }
+
+    // Progress member to next stage
+    if (matrixOwnerId === rootMember?.id) {
+      setRootMember(prev => prev ? {
+        ...prev,
+        stage: targetStage,
+        personalMatrix: { members: [] } // Reset matrix for new stage
+      } : prev);
+    } else {
+      setMembers(prev => prev.map(m =>
+        m.id === matrixOwnerId ? {
+          ...m,
+          stage: targetStage,
+          personalMatrix: { members: [] } // Reset matrix for new stage
+        } : m
+      ));
+    }
+
+    console.log(`Member ${matrixOwnerId} progressed to Stage ${targetStage}`);
   };
 
   return {
