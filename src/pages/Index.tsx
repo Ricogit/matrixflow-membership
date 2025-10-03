@@ -235,7 +235,14 @@ const Index = () => {
                     <div key={member.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium">{member.name}</p>
+                          <div>
+                            <p className="font-medium">{member.name}</p>
+                            {member.sponsor && (
+                              <p className="text-xs text-muted-foreground">
+                                Sponsored by: {member.sponsor}
+                              </p>
+                            )}
+                          </div>
                           <span className="text-xs text-muted-foreground">
                             {formatTimestamp(member.joinDate)}
                           </span>
