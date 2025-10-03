@@ -13,7 +13,8 @@ import {
   DollarSign,
   Network,
   Clock,
-  Download
+  Download,
+  Eye
 } from 'lucide-react';
 
 const Index = () => {
@@ -247,6 +248,15 @@ const Index = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          onClick={() => setSelectedMemberView(member.id)}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          View Matrix
+                        </Button>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           member.status === 'active' ? 'bg-success/20 text-success' :
                           member.status === 'pending' ? 'bg-accent/20 text-accent' :
