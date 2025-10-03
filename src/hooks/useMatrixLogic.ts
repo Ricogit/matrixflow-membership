@@ -150,7 +150,7 @@ export const useMatrixLogic = () => {
     // Add to global members list
     setMembers(prev => [...prev, newMember]);
 
-    // Add to matrix owner's personal matrix
+    // Add to matrix owner's personal matrix (upline)
     if (matrixOwnerId === rootMember.id) {
       setRootMember(prev => prev ? {
         ...prev,
@@ -167,6 +167,42 @@ export const useMatrixLogic = () => {
           }
         } : m
       ));
+    }
+
+    // ALSO add to direct recruiter's personal matrix (if different from matrix owner)
+    if (recruiterId !== matrixOwnerId) {
+      const recruiterPersonalMatrix = recruiter.personalMatrix?.members || [];
+      const recruiterPositionData = findNextPositionInBinaryMatrix(recruiterPersonalMatrix, recruiterId);
+      
+      if (recruiterPositionData) {
+        // Create a copy for recruiter's personal matrix with adjusted position
+        const personalMatrixMember: Member = {
+          ...newMember,
+          position: {
+            level: recruiterPositionData.level,
+            slot: recruiterPositionData.slot,
+            parentId: recruiterPositionData.parentMemberId || recruiterId
+          }
+        };
+
+        if (recruiterId === rootMember.id) {
+          setRootMember(prev => prev ? {
+            ...prev,
+            personalMatrix: {
+              members: [...(prev.personalMatrix?.members || []), personalMatrixMember]
+            }
+          } : prev);
+        } else {
+          setMembers(prev => prev.map(m =>
+            m.id === recruiterId ? {
+              ...m,
+              personalMatrix: {
+                members: [...(m.personalMatrix?.members || []), personalMatrixMember]
+              }
+            } : m
+          ));
+        }
+      }
     }
 
     // Check if matrix is full (6/6) and trigger cycle
