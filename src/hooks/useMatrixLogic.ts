@@ -280,6 +280,41 @@ export const useMatrixLogic = () => {
     ));
   };
 
+  const updateMember = (memberId: string, updates: Partial<Member>) => {
+    // Update root member if it's the one being edited
+    if (memberId === rootMember?.id) {
+      setRootMember(prev => prev ? { ...prev, ...updates } : prev);
+      return;
+    }
+
+    // Update in members list
+    setMembers(prev => prev.map(m => 
+      m.id === memberId ? { ...m, ...updates } : m
+    ));
+
+    // Also update in all personal matrices where this member appears
+    setMembers(prev => prev.map(m => ({
+      ...m,
+      personalMatrix: {
+        members: m.personalMatrix?.members.map(pm =>
+          pm.id === memberId ? { ...pm, ...updates } : pm
+        ) || []
+      }
+    })));
+
+    // Update in root's personal matrix if needed
+    if (rootMember?.personalMatrix?.members.some(m => m.id === memberId)) {
+      setRootMember(prev => prev ? {
+        ...prev,
+        personalMatrix: {
+          members: prev.personalMatrix?.members.map(m =>
+            m.id === memberId ? { ...m, ...updates } : m
+          ) || []
+        }
+      } : prev);
+    }
+  };
+
   const cycleMatrixAndProgressStage = (matrixOwnerId: string) => {
     console.log(`Matrix cycled for member: ${matrixOwnerId}`);
     
@@ -332,6 +367,7 @@ export const useMatrixLogic = () => {
     getAvailablePositions,
     getMatrixStats,
     updateMemberStatus,
+    updateMember,
     findNextAvailablePosition,
     currentViewMemberId,
     setCurrentViewMemberId,

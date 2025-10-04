@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { MatrixVisualization } from '@/components/MatrixVisualization';
 import { StatsCard } from '@/components/StatsCard';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
+import { EditMemberDialog } from '@/components/EditMemberDialog';
 import { useMatrixLogic } from '@/hooks/useMatrixLogic';
 import { Member } from '@/types/member';
 import { 
@@ -25,6 +26,7 @@ const Index = () => {
     getAvailablePositions,
     getMatrixStats,
     updateMemberStatus,
+    updateMember,
     currentViewMemberId,
     setCurrentViewMemberId,
     getCurrentViewMatrix
@@ -114,13 +116,23 @@ const Index = () => {
         {/* Main Matrix Visualization - Always shows root */}
         <Card className="bg-gradient-card shadow-medium mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5 text-primary" />
-              Main Matrix Structure
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Click on any member to view their personal matrix below
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Network className="h-5 w-5 text-primary" />
+                  Main Matrix Structure
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Click on any member to view their personal matrix below
+                </p>
+              </div>
+              {rootMember && (
+                <EditMemberDialog 
+                  member={rootMember} 
+                  onUpdateMember={updateMember}
+                />
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <MatrixVisualization
@@ -149,13 +161,19 @@ const Index = () => {
                     Viewing {selectedMember.name}'s downline structure
                   </p>
                 </div>
-                <Button
-                  onClick={() => setSelectedMemberView(undefined)}
-                  variant="outline"
-                  size="sm"
-                >
-                  Close View
-                </Button>
+                <div className="flex items-center gap-2">
+                  <EditMemberDialog 
+                    member={selectedMember} 
+                    onUpdateMember={updateMember}
+                  />
+                  <Button
+                    onClick={() => setSelectedMemberView(undefined)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Close View
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
