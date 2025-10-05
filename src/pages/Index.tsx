@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MatrixVisualization } from '@/components/MatrixVisualization';
@@ -7,6 +8,8 @@ import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { EditMemberDialog } from '@/components/EditMemberDialog';
 import { useMatrixLogic } from '@/hooks/useMatrixLogic';
 import { Member } from '@/types/member';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 import { 
   Users, 
   UserPlus, 
@@ -15,10 +18,15 @@ import {
   Network,
   Clock,
   Download,
-  Eye
+  Eye,
+  LogOut
 } from 'lucide-react';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
   const {
     members,
     rootMember,
@@ -33,6 +41,53 @@ const Index = () => {
   } = useMatrixLogic();
 
   const [selectedMemberView, setSelectedMemberView] = React.useState<string | undefined>();
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsAuthenticated(!!session);
+        if (!session) {
+          navigate('/auth');
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setLoading(false);
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: 'Signed out',
+      description: 'You have been signed out successfully',
+    });
+    navigate('/auth');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const stats = getMatrixStats();
   const availablePositions = getAvailablePositions();
@@ -106,6 +161,14 @@ const Index = () => {
               >
                 <Download className="h-4 w-4" />
                 Export Data
+              </Button>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
               </Button>
             </div>
           </div>
