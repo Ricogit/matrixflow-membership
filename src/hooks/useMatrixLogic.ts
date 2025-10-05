@@ -360,6 +360,34 @@ export const useMatrixLogic = () => {
     console.log(`Member ${matrixOwnerId} progressed to Stage ${targetStage}`);
   };
 
+  const deleteMember = (memberId: string) => {
+    // Cannot delete root member
+    if (memberId === rootMember?.id) {
+      throw new Error('Cannot delete root member');
+    }
+
+    // Remove from members list
+    setMembers(prev => prev.filter(m => m.id !== memberId));
+
+    // Remove from root's personal matrix
+    if (rootMember?.personalMatrix?.members.some(m => m.id === memberId)) {
+      setRootMember(prev => prev ? {
+        ...prev,
+        personalMatrix: {
+          members: prev.personalMatrix?.members.filter(m => m.id !== memberId) || []
+        }
+      } : prev);
+    }
+
+    // Remove from all other members' personal matrices
+    setMembers(prev => prev.map(m => ({
+      ...m,
+      personalMatrix: {
+        members: m.personalMatrix?.members.filter(pm => pm.id !== memberId) || []
+      }
+    })));
+  };
+
   return {
     members,
     rootMember,
@@ -371,6 +399,7 @@ export const useMatrixLogic = () => {
     findNextAvailablePosition,
     currentViewMemberId,
     setCurrentViewMemberId,
-    getCurrentViewMatrix
+    getCurrentViewMatrix,
+    deleteMember
   };
 };

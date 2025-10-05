@@ -19,7 +19,8 @@ import {
   Clock,
   Download,
   Eye,
-  LogOut
+  LogOut,
+  Trash2
 } from 'lucide-react';
 
 const Index = () => {
@@ -37,7 +38,8 @@ const Index = () => {
     updateMember,
     currentViewMemberId,
     setCurrentViewMemberId,
-    getCurrentViewMatrix
+    getCurrentViewMatrix,
+    deleteMember
   } = useMatrixLogic();
 
   const [selectedMemberView, setSelectedMemberView] = React.useState<string | undefined>();
@@ -101,6 +103,24 @@ const Index = () => {
       addMember(memberData);
     } catch (error) {
       console.error('Failed to add member:', error);
+    }
+  };
+
+  const handleDeleteMember = (memberId: string, memberName: string) => {
+    if (window.confirm(`Are you sure you want to permanently delete ${memberName} from the system? This action cannot be undone.`)) {
+      try {
+        deleteMember(memberId);
+        toast({
+          title: 'Member deleted',
+          description: `${memberName} has been removed from the system`,
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to delete member',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -344,6 +364,15 @@ const Index = () => {
                         >
                           <Eye className="h-3 w-3" />
                           View Matrix
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteMember(member.id, member.name)}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-1 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
                         </Button>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           member.status === 'active' ? 'bg-success/20 text-success' :
