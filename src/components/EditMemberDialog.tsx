@@ -19,7 +19,6 @@ export const EditMemberDialog: React.FC<EditMemberDialogProps> = ({
   const [open, setOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
     name: member.name,
-    email: member.email,
     phone: member.phone || ''
   });
   const { toast } = useToast();
@@ -27,10 +26,10 @@ export const EditMemberDialog: React.FC<EditMemberDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email) {
+    if (!formData.name) {
       toast({
         title: "Error",
-        description: "Name and email are required fields.",
+        description: "Name is a required field.",
         variant: "destructive"
       });
       return;
@@ -38,7 +37,6 @@ export const EditMemberDialog: React.FC<EditMemberDialogProps> = ({
 
     onUpdateMember(member.id, {
       name: formData.name,
-      email: formData.email,
       phone: formData.phone || undefined
     });
     
@@ -55,7 +53,6 @@ export const EditMemberDialog: React.FC<EditMemberDialogProps> = ({
     if (open) {
       setFormData({
         name: member.name,
-        email: member.email,
         phone: member.phone || ''
       });
     }
@@ -85,18 +82,6 @@ export const EditMemberDialog: React.FC<EditMemberDialogProps> = ({
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter member's full name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Enter email address"
               required
             />
           </div>
