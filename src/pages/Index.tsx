@@ -8,7 +8,7 @@ import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { EditMemberDialog } from '@/components/EditMemberDialog';
 import { useMatrixLogic } from '@/hooks/useMatrixLogic';
 import { Member } from '@/types/member';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { 
   Users, 
