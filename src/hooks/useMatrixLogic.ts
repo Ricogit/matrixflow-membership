@@ -1,11 +1,123 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Member, MatrixStats } from '@/types/member';
 import { getNextStage } from '@/types/stages';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export const useMatrixLogic = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [rootMember, setRootMember] = useState<Member | undefined>();
   const [currentViewMemberId, setCurrentViewMemberId] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Load members from database on mount
+  useEffect(() => {
+    loadMembersFromDatabase();
+  }, []);
+
+  const loadMembersFromDatabase = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Convert database format to app format
+        const loadedMembers: Member[] = data.map(dbMember => ({
+          id: dbMember.id,
+          name: dbMember.name,
+          email: dbMember.email,
+          phone: dbMember.phone || undefined,
+          status: dbMember.status as Member['status'],
+          position: {
+            level: dbMember.level,
+            slot: dbMember.slot,
+            parentId: dbMember.upline_id || undefined
+          },
+          joinDate: dbMember.join_date,
+          personalMatrix: (dbMember.personal_matrix || { members: [] }) as unknown as { members: Member[] },
+          earnings: Number(dbMember.earnings),
+          stage: Number(dbMember.stage.replace('stage', '')),
+          directUplineId: dbMember.upline_id || undefined
+        }));
+
+        // Find root member (level 0)
+        const root = loadedMembers.find(m => m.position.level === 0);
+        if (root) {
+          setRootMember(root);
+          setCurrentViewMemberId(root.id);
+        }
+
+        // Set non-root members
+        setMembers(loadedMembers.filter(m => m.position.level !== 0));
+      }
+    } catch (error) {
+      console.error('Error loading members:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load members from database",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveMemberToDatabase = async (member: Member) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('members')
+        .upsert({
+          id: member.id,
+          user_id: user.id,
+          name: member.name,
+          email: member.email,
+          phone: member.phone || null,
+          status: member.status,
+          upline_id: member.position.parentId || null,
+          matrix_owner_id: member.position.parentId || null,
+          level: member.position.level,
+          slot: member.position.slot,
+          stage: `stage${member.stage}`,
+          earnings: member.earnings,
+          join_date: member.joinDate,
+          personal_matrix: member.personalMatrix as any
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving member:', error);
+      throw error;
+    }
+  };
+
+  const deleteMemberFromDatabase = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      throw error;
+    }
+  };
 
   // Check if matrix is full (6 positions: 2 in level 1 + 4 in level 2)
   const isMatrixFull = (matrixMembers: Member[]): boolean => {
@@ -80,8 +192,8 @@ export const useMatrixLogic = () => {
     return null; // Matrix is full
   };
 
-  const addMember = (memberData: Omit<Member, 'id' | 'joinDate'>) => {
-    const newId = `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const addMember = async (memberData: Omit<Member, 'id' | 'joinDate'>) => {
+    const newId = crypto.randomUUID();
     
     // If no root member, make this the root
     if (!rootMember) {
@@ -96,6 +208,7 @@ export const useMatrixLogic = () => {
       };
       setRootMember(newRootMember);
       setCurrentViewMemberId(newId);
+      await saveMemberToDatabase(newRootMember);
       return;
     }
 
@@ -155,23 +268,33 @@ export const useMatrixLogic = () => {
     // Add to global members list
     setMembers(prev => [...prev, newMember]);
 
+    // Save to database
+    await saveMemberToDatabase(newMember);
+
     // Add to matrix owner's personal matrix (upline)
     if (matrixOwnerId === rootMember.id) {
-      setRootMember(prev => prev ? {
-        ...prev,
+      const updatedRoot = {
+        ...rootMember,
         personalMatrix: { 
-          members: [...(prev.personalMatrix?.members || []), newMember] 
+          members: [...(rootMember.personalMatrix?.members || []), newMember] 
         }
-      } : prev);
+      };
+      setRootMember(updatedRoot);
+      await saveMemberToDatabase(updatedRoot);
     } else {
-      setMembers(prev => prev.map(m => 
-        m.id === matrixOwnerId ? {
-          ...m,
-          personalMatrix: { 
-            members: [...(m.personalMatrix?.members || []), newMember] 
-          }
-        } : m
-      ));
+      setMembers(prev => prev.map(m => {
+        if (m.id === matrixOwnerId) {
+          const updated = {
+            ...m,
+            personalMatrix: { 
+              members: [...(m.personalMatrix?.members || []), newMember] 
+            }
+          };
+          saveMemberToDatabase(updated);
+          return updated;
+        }
+        return m;
+      }));
     }
 
     // ALSO add to direct recruiter's personal matrix (if different from matrix owner)
@@ -191,21 +314,28 @@ export const useMatrixLogic = () => {
         };
 
         if (recruiterId === rootMember.id) {
-          setRootMember(prev => prev ? {
-            ...prev,
+          const updatedRoot = {
+            ...rootMember,
             personalMatrix: {
-              members: [...(prev.personalMatrix?.members || []), personalMatrixMember]
+              members: [...(rootMember.personalMatrix?.members || []), personalMatrixMember]
             }
-          } : prev);
+          };
+          setRootMember(updatedRoot);
+          await saveMemberToDatabase(updatedRoot);
         } else {
-          setMembers(prev => prev.map(m =>
-            m.id === recruiterId ? {
-              ...m,
-              personalMatrix: {
-                members: [...(m.personalMatrix?.members || []), personalMatrixMember]
-              }
-            } : m
-          ));
+          setMembers(prev => prev.map(m => {
+            if (m.id === recruiterId) {
+              const updated = {
+                ...m,
+                personalMatrix: {
+                  members: [...(m.personalMatrix?.members || []), personalMatrixMember]
+                }
+              };
+              saveMemberToDatabase(updated);
+              return updated;
+            }
+            return m;
+          }));
         }
       }
     }
@@ -213,7 +343,7 @@ export const useMatrixLogic = () => {
     // Check if matrix is full (6/6) and trigger cycle
     const updatedMatrix = [...matrixMembers, newMember];
     if (isMatrixFull(updatedMatrix)) {
-      cycleMatrixAndProgressStage(matrixOwnerId);
+      await cycleMatrixAndProgressStage(matrixOwnerId);
     }
   };
 
@@ -280,42 +410,61 @@ export const useMatrixLogic = () => {
     ));
   };
 
-  const updateMember = (memberId: string, updates: Partial<Member>) => {
+  const updateMember = async (memberId: string, updates: Partial<Member>) => {
     // Update root member if it's the one being edited
     if (memberId === rootMember?.id) {
-      setRootMember(prev => prev ? { ...prev, ...updates } : prev);
+      const updated = { ...rootMember, ...updates };
+      setRootMember(updated);
+      await saveMemberToDatabase(updated);
       return;
     }
 
     // Update in members list
-    setMembers(prev => prev.map(m => 
-      m.id === memberId ? { ...m, ...updates } : m
-    ));
+    let updatedMember: Member | undefined;
+    setMembers(prev => prev.map(m => {
+      if (m.id === memberId) {
+        updatedMember = { ...m, ...updates };
+        return updatedMember;
+      }
+      return m;
+    }));
+
+    if (updatedMember) {
+      await saveMemberToDatabase(updatedMember);
+    }
 
     // Also update in all personal matrices where this member appears
-    setMembers(prev => prev.map(m => ({
-      ...m,
-      personalMatrix: {
-        members: m.personalMatrix?.members.map(pm =>
-          pm.id === memberId ? { ...pm, ...updates } : pm
-        ) || []
+    setMembers(prev => prev.map(m => {
+      const updated = {
+        ...m,
+        personalMatrix: {
+          members: m.personalMatrix?.members.map(pm =>
+            pm.id === memberId ? { ...pm, ...updates } : pm
+          ) || []
+        }
+      };
+      if (m.personalMatrix?.members.some(pm => pm.id === memberId)) {
+        saveMemberToDatabase(updated);
       }
-    })));
+      return updated;
+    }));
 
     // Update in root's personal matrix if needed
     if (rootMember?.personalMatrix?.members.some(m => m.id === memberId)) {
-      setRootMember(prev => prev ? {
-        ...prev,
+      const updated = {
+        ...rootMember,
         personalMatrix: {
-          members: prev.personalMatrix?.members.map(m =>
+          members: rootMember.personalMatrix?.members.map(m =>
             m.id === memberId ? { ...m, ...updates } : m
           ) || []
         }
-      } : prev);
+      };
+      setRootMember(updated);
+      await saveMemberToDatabase(updated);
     }
   };
 
-  const cycleMatrixAndProgressStage = (matrixOwnerId: string) => {
+  const cycleMatrixAndProgressStage = async (matrixOwnerId: string) => {
     console.log(`Matrix cycled for member: ${matrixOwnerId}`);
     
     const matrixOwner = matrixOwnerId === rootMember?.id ? rootMember : members.find(m => m.id === matrixOwnerId);
@@ -342,50 +491,68 @@ export const useMatrixLogic = () => {
 
     // Progress member to next stage
     if (matrixOwnerId === rootMember?.id) {
-      setRootMember(prev => prev ? {
-        ...prev,
+      const updated = {
+        ...rootMember,
         stage: targetStage,
         personalMatrix: { members: [] } // Reset matrix for new stage
-      } : prev);
+      };
+      setRootMember(updated);
+      await saveMemberToDatabase(updated);
     } else {
-      setMembers(prev => prev.map(m =>
-        m.id === matrixOwnerId ? {
-          ...m,
-          stage: targetStage,
-          personalMatrix: { members: [] } // Reset matrix for new stage
-        } : m
-      ));
+      setMembers(prev => prev.map(m => {
+        if (m.id === matrixOwnerId) {
+          const updated = {
+            ...m,
+            stage: targetStage,
+            personalMatrix: { members: [] } // Reset matrix for new stage
+          };
+          saveMemberToDatabase(updated);
+          return updated;
+        }
+        return m;
+      }));
     }
 
     console.log(`Member ${matrixOwnerId} progressed to Stage ${targetStage}`);
   };
 
-  const deleteMember = (memberId: string) => {
+  const deleteMember = async (memberId: string) => {
     // Cannot delete root member
     if (memberId === rootMember?.id) {
       throw new Error('Cannot delete root member');
     }
+
+    // Remove from database
+    await deleteMemberFromDatabase(memberId);
 
     // Remove from members list
     setMembers(prev => prev.filter(m => m.id !== memberId));
 
     // Remove from root's personal matrix
     if (rootMember?.personalMatrix?.members.some(m => m.id === memberId)) {
-      setRootMember(prev => prev ? {
-        ...prev,
+      const updated = {
+        ...rootMember,
         personalMatrix: {
-          members: prev.personalMatrix?.members.filter(m => m.id !== memberId) || []
+          members: rootMember.personalMatrix?.members.filter(m => m.id !== memberId) || []
         }
-      } : prev);
+      };
+      setRootMember(updated);
+      await saveMemberToDatabase(updated);
     }
 
     // Remove from all other members' personal matrices
-    setMembers(prev => prev.map(m => ({
-      ...m,
-      personalMatrix: {
-        members: m.personalMatrix?.members.filter(pm => pm.id !== memberId) || []
+    setMembers(prev => prev.map(m => {
+      const updated = {
+        ...m,
+        personalMatrix: {
+          members: m.personalMatrix?.members.filter(pm => pm.id !== memberId) || []
+        }
+      };
+      if (m.personalMatrix?.members.some(pm => pm.id === memberId)) {
+        saveMemberToDatabase(updated);
       }
-    })));
+      return updated;
+    }));
   };
 
   return {
@@ -400,6 +567,7 @@ export const useMatrixLogic = () => {
     currentViewMemberId,
     setCurrentViewMemberId,
     getCurrentViewMatrix,
-    deleteMember
+    deleteMember,
+    loading
   };
 };

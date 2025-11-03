@@ -39,7 +39,8 @@ const Index = () => {
     currentViewMemberId,
     setCurrentViewMemberId,
     getCurrentViewMatrix,
-    deleteMember
+    deleteMember,
+    loading: matrixLoading
   } = useMatrixLogic();
 
   const [selectedMemberView, setSelectedMemberView] = React.useState<string | undefined>();
@@ -76,7 +77,7 @@ const Index = () => {
     navigate('/auth');
   };
 
-  if (loading) {
+  if (loading || matrixLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -98,18 +99,27 @@ const Index = () => {
     ? (selectedMemberView === rootMember?.id ? rootMember : members.find(m => m.id === selectedMemberView))
     : undefined;
 
-  const handleAddMember = (memberData: Parameters<typeof addMember>[0]) => {
+  const handleAddMember = async (memberData: Parameters<typeof addMember>[0]) => {
     try {
-      addMember(memberData);
+      await addMember(memberData);
+      toast({
+        title: 'Member added',
+        description: 'Member has been successfully added to the matrix',
+      });
     } catch (error) {
       console.error('Failed to add member:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add member',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleDeleteMember = (memberId: string, memberName: string) => {
+  const handleDeleteMember = async (memberId: string, memberName: string) => {
     if (window.confirm(`Are you sure you want to permanently delete ${memberName} from the system? This action cannot be undone.`)) {
       try {
-        deleteMember(memberId);
+        await deleteMember(memberId);
         toast({
           title: 'Member deleted',
           description: `${memberName} has been removed from the system`,
